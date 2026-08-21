@@ -220,14 +220,17 @@
 // ── 24-Hour Scan Gate ──
 (function(){
   var GATE_KEY = 'dbt_scan_stamp';
-  var GATE_SHOWN_KEY = 'dbt_gate_shown';
   var now = Date.now();
   var stamp = localStorage.getItem(GATE_KEY);
-  var gateWasShown = localStorage.getItem(GATE_SHOWN_KEY);
+
+  function showContent(){
+    // Rule 1 & 2: Set stamp to now, show content normally
+    localStorage.setItem(GATE_KEY, now.toString());
+  }
 
   function showGate(){
-    // Mark that gate was shown — next scan will reset and show content
-    localStorage.setItem(GATE_SHOWN_KEY, '1');
+    // Rule 3: Clear the stamp entirely, show gate, block content
+    localStorage.removeItem(GATE_KEY);
     document.getElementById('expired-screen').classList.add('show');
     var w = document.querySelector('.wrapper');
     var s = document.getElementById('scrim');
@@ -235,20 +238,14 @@
     if(s) s.style.display='none';
   }
 
-  function showContent(){
-    // Reset clock to now, clear gate-shown flag
-    localStorage.setItem(GATE_KEY, now.toString());
-    localStorage.removeItem(GATE_SHOWN_KEY);
-  }
-
-  if(!stamp || gateWasShown){
-    // No stamp ever, OR gate was shown last time — this is a fresh scan, let them in
+  if(!stamp){
+    // Rule 1: No stamp — fresh load, set stamp, show content
     showContent();
   } else if((now - parseInt(stamp)) < 259200000){
-    // Less than 72 hours since last scan — show content, reset clock
+    // Rule 2: Stamp exists, less than 72 hours — reset stamp, show content
     showContent();
   } else {
-    // 72+ hours elapsed and gate not yet shown — show gate
+    // Rule 3: Stamp exists, 72+ hours — clear stamp, show gate
     showGate();
   }
 })();
